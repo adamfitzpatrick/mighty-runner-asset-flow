@@ -1,8 +1,63 @@
 AWSTemplateFormatVersion: 2010-09-09
 Description: Infrastructure for API flow which permits storage of static assets in an s3 bucket for later retrieval
+Parameters:
+  Environment:
+    Type: String
+    Default: dev
 Resources:
+  PutObjectLambdaExecutionRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName:
+        Fn::Join:
+          - "-"
+          - - !Ref Environment
+            - put-object-lambda-execution-role
+      Description: Role to permit lambda to put objects to a specified S3 bucket
+      AssumeRolePolicyDocument:
+        Version: 2012-10-17
+        Statement:
+        - Effect: Allow
+          Principal:
+            Service:
+            - lambda.amazonaws.com
+          Action:
+          - sts:AssumeRole
+      Policies:
+      - PolicyName: put-object-to-s3
+        PolicyDocument:
+          Version: 2012-10-17
+          Statement:
+          - Effect: Allow
+            Action:
+            - s3:PutObject
+            Resource:
+            - !GetAtt StaticAssetS3Bucket.Arn
+            - Fn::Join:
+              - ""
+              - - !GetAtt StaticAssetS3Bucket.Arn
+                - "/*"
+  PubObjectLambda:
+    Type: AWS::Lambda::Function
+    Properties:
+      FunctionName:
+        Fn::Join:
+          - "-"
+          - - !Ref Environment
+            - mighty-runner-put-static-asset-lambda
+      Description: Lambda function to PUT objects in a specific S3 bucket
+      Handler: index.handler
+      Runtime: nodejs10.x
+      Role: !GetAtt PutObjectLambdaExecutionRole.Arn
+      Code:
+        S3Bucket: stepinto-infrastructure-resources
+        S3Key: put-object-lambda.zip
   StaticAssetS3Bucket:
     Type: AWS::S3::Bucket
     Properties:
-      BucketName: mighty-runner-static-assets
+      BucketName:
+        Fn::Join:
+          - "-"
+          - - !Ref Environment
+            - mighty-runner-static-assets
       AccessControl: PublicRead
