@@ -1,0 +1,8 @@
+AWSTemplateFormatVersion: 2010-09-09
+Description: Infrastructure for API flow which permits storage of static assets in an s3 bucket for later retrieval
+Resources:
+  StaticAssetS3Bucket:
+    Type: AWS::S3::Bucket
+    Properties:
+      BucketName: mighty-runner-static-assets
+      AccessControl: PublicRead
